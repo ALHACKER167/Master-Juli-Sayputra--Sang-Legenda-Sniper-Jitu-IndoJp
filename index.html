@@ -586,6 +586,33 @@
             border-top: 1px solid rgba(255, 215, 0, 0.3);
         }
         
+        /* Notification Styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 5px;
+            color: white;
+            font-weight: 600;
+            z-index: 9999;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background: linear-gradient(135deg, var(--success) 0%, #20c997 100%);
+        }
+        
+        .notification.error {
+            background: linear-gradient(135deg, var(--danger) 0%, #e4606d 100%);
+        }
+        
         /* Animations */
         @keyframes marquee {
             0% { transform: translateX(100%); }
@@ -710,6 +737,7 @@
                 <li><a href="#" class="menu-item active" onclick="showSection('dashboard')"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
                 <li><a href="#" class="menu-item" onclick="showSection('prediksiBola')"><i class="fas fa-futbol"></i> Prediksi Bola</a></li>
                 <li><a href="#" class="menu-item" onclick="showSection('pengisianTeks')"><i class="fas fa-edit"></i> Pengisian Teks Bola</a></li>
+                <li><a href="#" class="menu-item" onclick="showSection('konversiSkor')"><i class="fas fa-exchange-alt"></i> Konversi Skor</a></li>
             </ul>
         </nav>
     </div>
@@ -842,6 +870,35 @@ PARAGUAY INTERMEDIA DIVISION
             
             <div id="output" class="output"></div>
         </section>
+
+        <!-- Bagian Konversi Skor -->
+        <section id="konversiSkor" class="section" style="display:none;">
+            <h2>Konversi Skor</h2>
+            <p>Masukkan data pertandingan dengan skor yang menggunakan tanda ":" atau "-" dan konversi ke format yang seragam.</p>
+            
+            <div class="form-container">
+                <textarea id="inputSkor" placeholder="Masukkan data pertandingan dengan format:
+
+ARGENTINA PRIMERA NACIONAL PLAYOFF
+
+20/10 00:45 WIB Gimnasia Jujuy vs Deportivo Madryn 1 : 0
+20/10 03:00 WIB Deportivo Moron vs CA Atlanta 2 : 1
+
+CHILE PRIMERA B
+
+19/10 22:30 WIB Deportes Antofagasta vs CD Universidad de Concepcion 1 : 0
+20/10 01:00 WIB Deportes Copiapo vs CD Magallanes 1 : 3
+20/10 03:30 WIB Deportes Concepcion vs San Luis Quillota 2 : 0
+20/10 03:30 WIB Deportes Temuco vs Deportes Santa Cruz 1 : 0"></textarea>
+                
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="konversiSkor()"><i class="fas fa-exchange-alt"></i> Konversi Skor</button>
+                    <button class="btn btn-success" onclick="copyKonversiHasil()"><i class="fas fa-copy"></i> Salin Hasil</button>
+                </div>
+            </div>
+            
+            <div id="outputKonversi" class="output"></div>
+        </section>
     </main>
     
     <!-- Modal untuk menampilkan HTML code -->
@@ -855,6 +912,9 @@ PARAGUAY INTERMEDIA DIVISION
             <button class="btn btn-accent" id="copy-code-btn"><i class="fas fa-copy"></i> Salin Kode</button>
         </div>
     </div>
+    
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
     
     <!-- Footer -->
     <footer class="footer">
@@ -889,6 +949,18 @@ PARAGUAY INTERMEDIA DIVISION
 
         // Inisialisasi halaman dashboard
         showSection('dashboard');
+        
+        // Fungsi untuk menampilkan notifikasi
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
         
         // Fungsi untuk efek meteor
         function createMeteor() {
@@ -965,14 +1037,14 @@ PARAGUAY INTERMEDIA DIVISION
             });
             
             // Tampilkan notifikasi
-            alert('SBO Virtual Live Stream telah diperbarui!');
+            showNotification('SBO Virtual Live Stream telah diperbarui!');
         }
         
         // Fungsi generate tabel prediksi
         function generateTable() {
             let input = document.getElementById("inputData").value.trim();
             if (!input) {
-                alert("Masukkan data prediksi terlebih dahulu!");
+                showNotification("Masukkan data prediksi terlebih dahulu!", "error");
                 return;
             }
             
@@ -1026,12 +1098,13 @@ PARAGUAY INTERMEDIA DIVISION
             
             document.getElementById("outputTable").innerHTML = tableHtml;
             document.getElementById("htmlCode").style.display = "none";
+            showNotification("Tabel prediksi berhasil digenerate!");
         }
         
         function showHtmlCode() {
             // Pastikan tabel sudah digenerate
             if (!document.getElementById("outputTable").innerHTML) {
-                alert("Generate tabel terlebih dahulu sebelum melihat kode HTML!");
+                showNotification("Generate tabel terlebih dahulu sebelum melihat kode HTML!", "error");
                 return;
             }
             
@@ -1418,13 +1491,13 @@ PARAGUAY INTERMEDIA DIVISION
         function copyHtmlCode() {
             let htmlContent = document.getElementById("htmlCode").textContent;
             if (!htmlContent) {
-                alert("Generate tabel dan tampilkan kode HTML terlebih dahulu sebelum menyalin!");
+                showNotification("Generate tabel dan tampilkan kode HTML terlebih dahulu sebelum menyalin!", "error");
                 return;
             }
             
             navigator.clipboard.writeText(htmlContent)
                 .then(() => {
-                    alert("Kode HTML telah disalin ke clipboard!");
+                    showNotification("Kode HTML telah disalin ke clipboard!");
                 })
                 .catch(err => {
                     console.error('Gagal menyalin teks: ', err);
@@ -1435,7 +1508,7 @@ PARAGUAY INTERMEDIA DIVISION
                     textArea.select();
                     document.execCommand('copy');
                     document.body.removeChild(textArea);
-                    alert("Kode HTML telah disalin ke clipboard!");
+                    showNotification("Kode HTML telah disalin ke clipboard!");
                 });
         }
         
@@ -1443,7 +1516,7 @@ PARAGUAY INTERMEDIA DIVISION
         function prosesInput() {
             var input = document.getElementById('jadwalInput').value.trim();
             if (input === "") {
-                alert("Harap lengkapi kolom input!");
+                showNotification("Harap lengkapi kolom input!", "error");
                 return;
             }
             var ligaArray = input.split(/\n{2,}/);
@@ -1461,6 +1534,7 @@ PARAGUAY INTERMEDIA DIVISION
                 outputHTML += `</div><br>`;
             });
             document.getElementById('output').innerHTML = outputHTML;
+            showNotification("Jadwal berhasil diproses!");
         }
         
         // Fungsi untuk menyalin hasil ke clipboard
@@ -1469,7 +1543,7 @@ PARAGUAY INTERMEDIA DIVISION
             if (result) {
                 navigator.clipboard.writeText(result)
                     .then(() => {
-                        alert("Hasil berhasil disalin ke clipboard!");
+                        showNotification("Hasil berhasil disalin ke clipboard!");
                     })
                     .catch(err => {
                         console.error('Gagal menyalin teks: ', err);
@@ -1480,11 +1554,85 @@ PARAGUAY INTERMEDIA DIVISION
                         textArea.select();
                         document.execCommand('copy');
                         document.body.removeChild(textArea);
-                        alert("Hasil berhasil disalin ke clipboard!");
+                        showNotification("Hasil berhasil disalin ke clipboard!");
                     });
             } else {
-                alert("Tidak ada hasil untuk disalin. Proses jadwal terlebih dahulu.");
+                showNotification("Tidak ada hasil untuk disalin. Proses jadwal terlebih dahulu.", "error");
             }
+        }
+        
+        // Fungsi untuk konversi skor
+        function konversiSkor() {
+            let input = document.getElementById("inputSkor").value.trim();
+            if (!input) {
+                showNotification("Masukkan data pertandingan terlebih dahulu!", "error");
+                return;
+            }
+            
+            let lines = input.split("\n").filter(line => line.trim() !== "");
+            let output = "";
+            let currentLeague = "";
+
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim();
+                
+                // Deteksi apakah baris ini adalah nama liga
+                if (!line.includes("vs") && !line.includes("VS") && line.length > 0 && !line.match(/^\d{2}\/\d{2} \d{2}:\d{2} WIB/)) {
+                    if (currentLeague) {
+                        output += "\n";
+                    }
+                    currentLeague = line;
+                    output += currentLeague + "\n\n";
+                } else {
+                    // Deteksi apakah baris ini adalah pertandingan
+                    let matchPattern = /^(\d{2}\/\d{2} \d{2}:\d{2} WIB)\s+(.+?)\s+[vV][sS]\s+(.+?)\s+(\d+)\s*[:|-]\s*(\d+)$/;
+                    let match = line.match(matchPattern);
+                    if (match) {
+                        let date = match[1];
+                        let team1 = match[2].trim();
+                        let team2 = match[3].trim();
+                        let score1 = match[4];
+                        let score2 = match[5];
+                        
+                        // Konversi skor ke format "1-0"
+                        let convertedScore = `${score1}-${score2}`;
+                        
+                        output += `${date} ${team1} vs ${team2} ${convertedScore}\n`;
+                    } else {
+                        // Jika tidak sesuai pola, tampilkan baris asli
+                        output += line + "\n";
+                    }
+                }
+            }
+
+            document.getElementById("outputKonversi").innerHTML = `<pre style="color: #FFD700; font-family: 'Courier New', monospace; white-space: pre-wrap;">${output}</pre>`;
+            showNotification("Konversi skor berhasil!");
+        }
+        
+        // Fungsi untuk menyalin hasil konversi
+        function copyKonversiHasil() {
+            const outputElement = document.getElementById("outputKonversi");
+            if (!outputElement || !outputElement.textContent) {
+                showNotification("Tidak ada hasil untuk disalin. Lakukan konversi terlebih dahulu!", "error");
+                return;
+            }
+            
+            const result = outputElement.textContent;
+            navigator.clipboard.writeText(result)
+                .then(() => {
+                    showNotification("Hasil konversi berhasil disalin ke clipboard!");
+                })
+                .catch(err => {
+                    console.error('Gagal menyalin teks: ', err);
+                    // Fallback untuk browser yang tidak mendukung clipboard API
+                    const textArea = document.createElement('textarea');
+                    textArea.value = result;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    showNotification("Hasil konversi berhasil disalin ke clipboard!");
+                });
         }
         
         // Event listener untuk modal
@@ -1496,7 +1644,7 @@ PARAGUAY INTERMEDIA DIVISION
             let code = document.getElementById("modal-html-code").textContent;
             navigator.clipboard.writeText(code)
                 .then(() => {
-                    alert("Kode HTML telah disalin!");
+                    showNotification("Kode HTML telah disalin!");
                     document.getElementById("html-modal").style.display = "none";
                 })
                 .catch(err => {
@@ -1508,7 +1656,7 @@ PARAGUAY INTERMEDIA DIVISION
                     textArea.select();
                     document.execCommand('copy');
                     document.body.removeChild(textArea);
-                    alert("Kode HTML telah disalin!");
+                    showNotification("Kode HTML telah disalin!");
                     document.getElementById("html-modal").style.display = "none";
                 });
         });
